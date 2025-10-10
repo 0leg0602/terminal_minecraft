@@ -92,7 +92,7 @@
       function spawn_animals(){
         for (let row = 0; row < map_size; row++) {
           for (let column = 0; column < map_size; column++) {
-            let tile = map[row][column];
+            let tile = map[0][row][column];
             tile.mobs = [];
             switch (tile.name) {
               case "forest":
@@ -125,26 +125,39 @@
 
 
       let map = [];
+      let map_layers = 3;
 
-      for (let row = 0; row < map_size; row++) {
-        map[row] = [];
-        for (let column = 0; column < map_size; column++) {
+      for (let layer=0; layer < map_layers; layer++){
+        map[layer] = []
+        for (let row = 0; row < map_size; row++) {
+          map[layer][row] = [];
+          for (let column = 0; column < map_size; column++) {
 
-          let add_cave = false;
+            let tile = {};
 
-          for (let i = 0; i < caves_amount; i++) {
-            if (cave_tiles[i][0] == row && cave_tiles[i][1] == column){
-              add_cave = true;
+            if (layer == 1){
+              tile.name = "cave";
+              tile.description = "There is a lot of [[;black;white]stone] around you";
+            } else {
+              let add_cave = false;
+  
+              for (let i = 0; i < caves_amount; i++) {
+                if (cave_tiles[i][0] == row && cave_tiles[i][1] == column){
+                  add_cave = true;
+                }
+              }
+              tile = get_random_tile();
+    
+              if (add_cave){
+                tile.objects.set("cave", true);
+                console.log("cave");
+              }
             }
+  
+            
+            
+            map[layer][row][column] = tile;
           }
-          let tile = get_random_tile();
-
-          if (add_cave){
-            tile.objects.set("cave", true);
-            console.log("cave");
-          }
-          
-          map[row][column] = tile;
         }
       }
       
@@ -208,20 +221,20 @@
       function check_if_out_of_bounds(object){
         if (object.x < 0) {
           return true;
-        } else if (object.x >= map[0].length) {
+        } else if (object.x >= map[0][0].length) {
           return true;
         }
         if (object.y < 0) {
           return true;
-        } else if (object.y >= map.length) {
+        } else if (object.y >= map[0].length) {
           return true;
         }
 
         return false;
       }
 
-      player.pos.y = Math.floor(map.length/2)
-      player.pos.x = Math.floor(map[0].length/2)
+      player.pos.y = Math.floor(map[0].length/2)
+      player.pos.x = Math.floor(map[0][0].length/2)
 
       function get_translation_from_direction(direction) {
         let translation = { x: 0, y: 0 , z: 0};
@@ -248,12 +261,12 @@
       jQuery(function ($, undefined) {
         term = $("#terminal").terminal(
           function (command) {
-            let current_tile = map[player.pos.y][player.pos.x];
+            let current_tile = map[Math.abs(player.pos.z)][player.pos.y][player.pos.x];
             if (command === "help") {
               term.echo("Available commands: status, walk [direction], run [direction], look [direction]");
 
             } else if (command === "status") {
-              term.echo(`You are in ${map[player.pos.y][player.pos.x].name}`);
+              term.echo(`You are in ${current_tile.name}`);
               term.echo(`You have [[;red;]${player.health}/100] health and [[;yellow;]${player.hunger}/20] hunger`);
 
             } else if (command === "inventory") {
@@ -366,12 +379,12 @@
                     }
                   } else {
                     if (command.startsWith("look")){
-                      term.echo(`You see a ${map[translated_y][translated_x].name}`);
+                      term.echo(`You see a ${map[Math.abs(player.pos.z)][translated_y][translated_x].name}`);
                     } else {
   
                       player.pos.x = translated_x;
                       player.pos.y = translated_y;
-                      term.echo(`You are now in a ${map[player.pos.y][player.pos.x].name}`);
+                      term.echo(`You are now in a ${map[Math.abs(player.pos.z)][player.pos.y][player.pos.x].name}`);
                       tick();
                     }
                   }
@@ -575,7 +588,7 @@
       let directions = directions_north.concat(directions_east.concat(directions_south.concat(directions_west)));
 
       function look_around(){
-        let tile = map[player.pos.y][player.pos.x];
+        let tile = map[Math.abs(player.pos.z)][player.pos.y][player.pos.x];
         term.echo(`You are in ${tile.name}`);
         term.echo(`${tile.description}`);
         if (tile.objects.has("trees")){
@@ -607,6 +620,7 @@
             
             
           }
+        
         }
       }
     </script>
