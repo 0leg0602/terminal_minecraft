@@ -24,6 +24,7 @@
       let map_size = 7;
       
       let cave_tiles = [];
+      
 
       let caves_amount = map_size;
 
@@ -138,6 +139,8 @@
             if (layer == 1){
               tile.name = "cave";
               tile.description = "There is a lot of [[;black;white]stone] around you";
+              tile.objects = new Map();
+              tile.mobs = [];
             } else {
               let add_cave = false;
   
@@ -235,6 +238,8 @@
 
       player.pos.y = Math.floor(map[0].length/2)
       player.pos.x = Math.floor(map[0][0].length/2)
+
+      map[0][player.pos.y][player.pos.x].objects.set("cave", true);
 
       function get_translation_from_direction(direction) {
         let translation = { x: 0, y: 0 , z: 0};
@@ -431,7 +436,7 @@
 
                 let craft_object = crafts.get(object);
                 if (craft_object.is_crafting_table_required){
-                  if (!current_tile.crafting_talbe == true) {
+                  if (!current_tile.objects.crafting_talbe == true) {
                     term.echo(`[[;#f00;]You need a crafting table to craft ${object}]`);
                     return;
                   } else {
@@ -530,16 +535,16 @@
               }
 
               // current_tile.mobs 
-            }else if (command.startsWith("place ")) {
+            } else if (command.startsWith("place ")) {
               let actions = command.split(" ")[0];
               let object = command.split(" ")[1];
               if (player.inventory.items.get(object) > 0){
                 if (object == "crafting_table") {
-                  if (current_tile.object.get("crafting_table") == true){
+                  if (current_tile.objects.get("crafting_table") == true){
                     term.echo("[[;#f00;]Crafting table is already placed here]");
                      
                   } else {
-                    current_tile.object.set("crafting_table", ture);
+                    current_tile.objects.set("crafting_table", true);
                     player.inventory.items.set(object, player.inventory.items.get(object)-1);
                     term.echo("Placed down a crafting table");
                   }
@@ -548,6 +553,19 @@
                 term.echo(`[[;red;]You do not have ${object}]`)
               }
 
+            } else if (command.startsWith("mine ")){
+              let target = command.split(" ")[1];
+              if (target != "stone"){
+                term.echo(`[[;#f00;]You can't mine ${target}]`);
+              } else {
+                let with_pos = command.search(" with ");
+                if (with_pos == -1){
+                  term.echo("[[;#f00;]With what?]");
+                } else {
+                  let tool = command.substring(with_pos+6);
+                  term.echo(tool);
+                }
+              }
             } else {
               term.echo("[[;red;]Command not found: " + command + "]");
             }
@@ -581,11 +599,11 @@
       let directions_north = ["north", "forward", "forwards", "onward", "onwards"];
       let directions_east = ["east", "right"];
       let directions_south = ["south", "back", "backwards"];
-      let directions_west = ["west", "left", "backwards"];
-      let directions_down = ["down", "bellow"];
-      let directions_up = ["up", "above"];
+      let directions_west = ["west", "left"];
+      let directions_down = ["down"];
+      let directions_up = ["up"];
 
-      let directions = directions_north.concat(directions_east.concat(directions_south.concat(directions_west)));
+      let directions = directions_north.concat(directions_east.concat(directions_south.concat(directions_west.concat(directions_down.concat(directions_up)))));
 
       function look_around(){
         let tile = map[Math.abs(player.pos.z)][player.pos.y][player.pos.x];
