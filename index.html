@@ -436,11 +436,9 @@
 
                 let craft_object = crafts.get(object);
                 if (craft_object.is_crafting_table_required){
-                  if (!current_tile.objects.crafting_talbe == true) {
+                  if (!current_tile.objects.get("crafting_table")) {
                     term.echo(`[[;#f00;]You need a crafting table to craft ${object}]`);
                     return;
-                  } else {
-                    
                   }
                 }
 
@@ -474,6 +472,7 @@
                   if (equipment_repository.has(object)){
                     if (player.inventory.equipment.has(object)){
                       term.echo(`[[;red;]You already have ${object}]`);
+                      return;
                     } else {
                       player.inventory.equipment.set(object, structuredClone(equipment_repository.get(object)));
                     }
@@ -506,11 +505,11 @@
               for (let i in current_tile.mobs) {
                 let mob = current_tile.mobs[i];
 
-                console.log(mob);
-                console.log(`${mob_name} ${mob.name}`);
+                // console.log(mob);
+                // console.log(`${mob_name} ${mob.name}`);
 
                 if (mob.name == mob_name){
-                  console.log("TRUE")
+                  // console.log("TRUE")
                   if (mob_count == mob_number_choice){
                     mob.health -= damage;
                     term.echo(`You dealt ${damage} to ${mob.name}_${mob_count+1} it's health is [[;#f00;]${mob.health}/${mob.max_health}]`);
@@ -533,6 +532,7 @@
                   }
                 }
               }
+              term.echo(`[[;#f00;] there is no ${mob_name}_${mob_number_choice+1} around]`);
 
               // current_tile.mobs 
             } else if (command.startsWith("place ")) {
@@ -548,9 +548,11 @@
                     player.inventory.items.set(object, player.inventory.items.get(object)-1);
                     term.echo("Placed down a crafting table");
                   }
+                } else {
+                  term.echo(`[[;red;]${object}] is not placeable`);
                 }
               } else {
-                term.echo(`[[;red;]You do not have ${object}]`)
+                term.echo(`[[;red;]You do not have ${object}]`);
               }
 
             } else if (command.startsWith("mine ")){
@@ -587,8 +589,31 @@
                 return Array.from(crafts.keys());
               } else if (command.startsWith("chop ") || command.startsWith("punch ")) {
                 return ["tree"];
+              } else if (command.startsWith("place ")){
+                return ["crafting_table"];
+              } else if (command.startsWith("attack ")){
+                let tile = map[Math.abs(player.pos.z)][player.pos.y][player.pos.x];
+                let mob_names = [];
+                
+                  let mob_count = [];
+  
+                  for (let mob_number in tile.mobs) {
+                    let mob = tile.mobs[mob_number];
+          
+                    if (mob_count[mob.name] == undefined){
+                      mob_count[mob.name] = 1;
+                    } else {
+                      mob_count[mob.name] += 1;
+                    }
+
+                    mob_names[mob_number] = `${mob.name}_${mob_count[mob.name]}`;
+                    // term.echo(`- ${mob.name}_${mob_count[mob.name]} [[;#f00;]${mob.health}/${mob.max_health}]`);
+                  }
+
+
+                return mob_names;
               } else {
-                return ['help', 'run', 'walk', 'status', 'inventory', 'look', 'craft', 'chop', 'punch'];
+                return ['help', 'run', 'walk', 'status', 'inventory', 'look', 'craft', 'chop', 'punch', 'place', 'attack'];
               }
             },
             // completionEscape: false,
@@ -614,7 +639,7 @@
             term.echo(`You see ${tile.objects.get("trees")} trees`);
           }
         }
-        if (tile.crafting_talbe == true){
+        if (tile.objects.get("crafting_table") == true){
           term.echo(`There is a crafting table`);
         }
         if (tile.objects.get("cave") == true){
